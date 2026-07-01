@@ -1,0 +1,30 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build universal binary
+        run: swift build -c release --arch arm64 --arch x86_64
+      - name: Package
+        run: |
+          set -euo pipefail
+          BINDIR=$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)
+          codesign --force --sign - "$BINDIR/dualtap"
+          TARBALL="dualtap-${GITHUB_REF_NAME}-macos-universal.tar.gz"
+          tar -czf "$TARBALL" -C "$BINDIR" dualtap
+          shasum -a 256 "$TARBALL"
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" \
+            "dualtap-${GITHUB_REF_NAME}-macos-universal.tar.gz" --clobber
