@@ -45,6 +45,7 @@ dualtap record -o meeting.m4a -f m4a # choose output path and container
 dualtap record --tracks separate     # write mic and system audio as two files
 dualtap record --transcribe -o call.m4a   # 16 kHz mono→L/R m4a, tuned for speech-to-text
 dualtap record --no-system            # microphone only
+dualtap record --exec 'whisper {}'    # run a command on the output once saved
 dualtap monitor                       # live meter for a recording running elsewhere
 dualtap devices                       # list input devices (for --mic-device)
 dualtap menubar                       # menu bar indicator (run in the background)
@@ -64,6 +65,7 @@ While `record` runs in a terminal, it shows a live meter inline. Press `Ctrl+C` 
 | `--mic-device NAME` | auto | Pin the mic by device name or UID (see `dualtap devices`) |
 | `--no-mic` / `--no-system` | both | Record only one source |
 | `--title NAME` | `recording` | Label shown in `monitor` / `menubar` |
+| `-x, --exec CMD` | off | Run `CMD` via `/bin/sh` after saving; `{}` and `$DUALTAP_OUTPUT` expand to the output path |
 
 ## How it works
 

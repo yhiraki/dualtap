@@ -10,6 +10,7 @@ struct RecordOptions {
     var micDevice: String?
     var noMic = false
     var noSystem = false
+    var exec: String?
 }
 
 // Flag is a lock-guarded stop flag set from a signal handler and polled by the meter loop.
@@ -103,6 +104,37 @@ func cmdRecord(_ o: RecordOptions) {
     }
     try? FileManager.default.removeItem(atPath: dir)
     logErr("done → \(output)")
+
+    if let cmd = o.exec {
+        runExec(cmd, output: output)
+    }
+}
+
+// runExec runs a post-processing command after the recording is saved. The command
+// is passed to /bin/sh -c; "{}" is replaced with the output path and the same path
+// is exported as $DUALTAP_OUTPUT. A non-zero exit is reported but not fatal.
+private func runExec(_ cmd: String, output: String) {
+    let script = cmd.replacingOccurrences(of: "{}", with: shellQuote(output))
+    let p = Process()
+    p.executableURL = URL(fileURLWithPath: "/bin/sh")
+    p.arguments = ["-c", script]
+    var env = ProcessInfo.processInfo.environment
+    env["DUALTAP_OUTPUT"] = output
+    p.environment = env
+    do {
+        try p.run()
+        p.waitUntilExit()
+        if p.terminationStatus != 0 {
+            logErr("exec exited \(p.terminationStatus): \(cmd)")
+        }
+    } catch {
+        logErr("exec failed to start: \(error)")
+    }
+}
+
+// shellQuote wraps a string in single quotes safe for /bin/sh.
+private func shellQuote(_ s: String) -> String {
+    "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
 }
 
 // waitSettle waits until the WAV files stop growing so the stopped taps can finalize.

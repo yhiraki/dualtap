@@ -9,8 +9,6 @@
 import CoreAudio
 import Foundation
 
-let version = "0.1.1"
-
 func usage() {
     print("""
     dualtap \(version) — record mic + system audio together on macOS
@@ -31,6 +29,7 @@ func usage() {
           --no-mic             record system audio only
           --no-system          record microphone only
           --title NAME         label shown in monitor/menubar
+      -x, --exec CMD           run CMD after saving ({} or $DUALTAP_OUTPUT = output path)
     """)
 }
 
@@ -64,6 +63,7 @@ func parseRecord(_ args: [String]) -> RecordOptions {
         case "--no-mic": o.noMic = true
         case "--no-system": o.noSystem = true
         case "--title": o.title = next(a)
+        case "-x", "--exec": o.exec = next(a)
         default:
             if a.hasPrefix("-") { logErr("unknown option: \(a)"); exit(2) }
             o.output = a // trailing positional output

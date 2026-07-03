@@ -9,6 +9,11 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
+      - name: Stamp version from tag
+        run: |
+          set -euo pipefail
+          V="${GITHUB_REF_NAME#v}"
+          printf '// Version.swift — release version. build.sh and CI stamp this from the git tag at build time.\nlet version = "%s"\n' "$V" > Sources/dualtap/Version.swift
       - name: Build universal binary
         run: swift build -c release --arch arm64 --arch x86_64
       - name: Package
@@ -19,12 +24,25 @@ jobs:
           TARBALL="dualtap-${GITHUB_REF_NAME}-macos-universal.tar.gz"
           tar -czf "$TARBALL" -C "$BINDIR" dualtap
           shasum -a 256 "$TARBALL"
+      - name: Extract release notes from CHANGELOG
+        run: |
+          set -euo pipefail
+          V="${GITHUB_REF_NAME#v}"
+          # Print the body between "## [V]" and the next "## [" heading.
+          awk -v v="$V" '
+            $0 ~ "^## \\[" v "\\]" {grab=1; next}
+            grab && /^## \[/ {exit}
+            grab {print}
+          ' CHANGELOG.md | sed '/^$/d;$!b;/^$/d' > notes.md
+          cat notes.md
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          NOTES_ARGS=(--generate-notes)
+          [ -s notes.md ] && NOTES_ARGS=(--notes-file notes.md --generate-notes)
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
-            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" "${NOTES_ARGS[@]}"
           gh release upload "$GITHUB_REF_NAME" \
             "dualtap-${GITHUB_REF_NAME}-macos-universal.tar.gz" --clobber
