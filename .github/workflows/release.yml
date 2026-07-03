@@ -33,7 +33,7 @@ jobs:
             $0 ~ "^## \\[" v "\\]" {grab=1; next}
             grab && /^## \[/ {exit}
             grab {print}
-          ' CHANGELOG.md | sed '/^$/d;$!b;/^$/d' > notes.md
+          ' CHANGELOG.md > notes.md
           cat notes.md
       - name: Publish release
         env:
