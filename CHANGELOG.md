@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.1.3] - 2026-07-04
 ### Added
 - Scheduled start for `record`: `--delay DUR` (relative) and `--start-at TIME`
   (wall-clock `HH:mm[:ss]`), shown as a countdown until recording begins.
@@ -27,7 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Core Audio process-tap API, no BlackHole. `record`, `monitor`, `devices`, and
   `menubar` subcommands.
 
-[Unreleased]: https://github.com/yhiraki/dualtap/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/yhiraki/dualtap/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/yhiraki/dualtap/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/yhiraki/dualtap/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/yhiraki/dualtap/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/yhiraki/dualtap/releases/tag/v0.1.0
