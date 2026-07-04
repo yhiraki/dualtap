@@ -11,6 +11,9 @@ struct RecordOptions {
     var noMic = false
     var noSystem = false
     var exec: String?
+    var startAt: Date?           // wait until this moment before recording (nil = start now)
+    var duration: TimeInterval?  // auto-stop this long after recording starts
+    var stopAt: Date?            // auto-stop at this wall-clock moment
 }
 
 // Flag is a lock-guarded stop flag set from a signal handler and polled by the meter loop.
@@ -43,6 +46,17 @@ func cmdRecord(_ o: RecordOptions) {
         logErr("nothing to record: --no-mic and --no-system are both set")
         exit(2)
     }
+
+    let flag = installSignalStop()
+
+    if let startAt = o.startAt {
+        waitToStart(until: startAt, flag: flag)
+        if flag.get() {
+            logErr("cancelled before recording started")
+            return
+        }
+    }
+
     let ts: String = {
         let f = DateFormatter(); f.dateFormat = "yyyyMMdd_HHmmss"
         return f.string(from: Date())
@@ -70,16 +84,24 @@ func cmdRecord(_ o: RecordOptions) {
         exit(1)
     }
 
-    saveState(RecState(title: o.title, dir: dir, startedAt: Date(), stopAt: nil))
-    let flag = installSignalStop()
+    let recStart = Date()
+    var deadline: Date?
+    if let dur = o.duration { deadline = recStart.addingTimeInterval(dur) }
+    if let sa = o.stopAt { deadline = deadline.map { min($0, sa) } ?? sa }
+
+    saveState(RecState(title: o.title, dir: dir, startedAt: recStart, stopAt: deadline))
+
+    // reached is true when the user interrupts or the auto-stop deadline passes.
+    let reached: () -> Bool = { flag.get() || (deadline.map { Date() >= $0 } ?? false) }
 
     if isatty(1) != 0 {
-        runMeter(header: "record   (Ctrl+C to stop and save)",
-                 frameRec: { loadState() }, shouldStop: { flag.get() })
+        let hdr = deadline == nil ? "record   (Ctrl+C to stop and save)"
+                                  : "record   (Ctrl+C to stop; auto-stops at deadline)"
+        runMeter(header: hdr, frameRec: { loadState() }, shouldStop: reached)
         print("\u{1b}[?25h")
     } else {
         logErr("recording... send SIGINT/SIGTERM to stop")
-        while !flag.get() { Thread.sleep(forTimeInterval: 0.2) }
+        while !reached() { Thread.sleep(forTimeInterval: 0.2) }
     }
 
     mic?.stop()
@@ -135,6 +157,25 @@ private func runExec(_ cmd: String, output: String) {
 // shellQuote wraps a string in single quotes safe for /bin/sh.
 private func shellQuote(_ s: String) -> String {
     "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
+}
+
+// waitToStart blocks until `until` is reached or the stop flag is set (Ctrl+C to cancel),
+// showing a countdown on stderr so it doesn't collide with the stdout meter.
+private func waitToStart(until: Date, flag: Flag) {
+    let f = DateFormatter(); f.dateFormat = "HH:mm:ss"
+    let tty = isatty(2) != 0
+    while !flag.get() {
+        let remain = until.timeIntervalSinceNow
+        if remain <= 0 { break }
+        if tty {
+            let r = Int(remain.rounded(.up))
+            let line = String(format: "\rdualtap: waiting to start — %02d:%02d until %@ (Ctrl+C to cancel)\u{1b}[K",
+                              r / 60, r % 60, f.string(from: until) as NSString)
+            FileHandle.standardError.write(line.data(using: .utf8)!)
+        }
+        Thread.sleep(forTimeInterval: 0.2)
+    }
+    if tty { FileHandle.standardError.write("\r\u{1b}[K".data(using: .utf8)!) }
 }
 
 // waitSettle waits until the WAV files stop growing so the stopped taps can finalize.

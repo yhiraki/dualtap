@@ -46,6 +46,9 @@ dualtap record --tracks separate     # write mic and system audio as two files
 dualtap record --transcribe -o call.m4a   # 16 kHz mono→L/R m4a, tuned for speech-to-text
 dualtap record --no-system            # microphone only
 dualtap record --exec 'whisper {}'    # run a command on the output once saved
+dualtap record --start-at 14:00       # wait until 14:00, then start recording
+dualtap record --duration 45m         # auto-stop 45 minutes after it starts
+dualtap record --start-at 14:00 --stop-at 15:00   # scheduled meeting capture
 dualtap monitor                       # live meter for a recording running elsewhere
 dualtap devices                       # list input devices (for --mic-device)
 dualtap menubar                       # menu bar indicator (run in the background)
@@ -66,6 +69,10 @@ While `record` runs in a terminal, it shows a live meter inline. Press `Ctrl+C` 
 | `--no-mic` / `--no-system` | both | Record only one source |
 | `--title NAME` | `recording` | Label shown in `monitor` / `menubar` |
 | `-x, --exec CMD` | off | Run `CMD` via `/bin/sh` after saving; `{}` and `$DUALTAP_OUTPUT` expand to the output path |
+| `--delay DUR` | off | Wait `DUR` before starting (`10s`, `5m`, `1h30m`) |
+| `--start-at TIME` | off | Wait until wall-clock `TIME` (`HH:mm[:ss]`) to start |
+| `--duration DUR` | off | Auto-stop `DUR` after recording starts (alias `--for`) |
+| `--stop-at TIME` | off | Auto-stop at wall-clock `TIME` (`HH:mm[:ss]`) |
 
 ## How it works
 

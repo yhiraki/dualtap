@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Scheduled start for `record`: `--delay DUR` (relative) and `--start-at TIME`
+  (wall-clock `HH:mm[:ss]`), shown as a countdown until recording begins.
+- Auto-stop for `record`: `--duration DUR` (alias `--for`) and `--stop-at TIME`;
+  when both are given, recording stops at whichever comes first.
 
 ## [0.1.2] - 2026-07-04
 ### Added
