@@ -46,3 +46,29 @@ jobs:
             gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" "${NOTES_ARGS[@]}"
           gh release upload "$GITHUB_REF_NAME" \
             "dualtap-${GITHUB_REF_NAME}-macos-universal.tar.gz" --clobber
+      - name: Bump Homebrew formula
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TAP_TOKEN:-}" ]; then
+            echo "TAP_GITHUB_TOKEN not set — skipping Homebrew formula bump" >&2
+            exit 0
+          fi
+          TARBALL="dualtap-${GITHUB_REF_NAME}-macos-universal.tar.gz"
+          SHA=$(shasum -a 256 "$TARBALL" | awk '{print $1}')
+          URL="https://github.com/yhiraki/dualtap/releases/download/${GITHUB_REF_NAME}/${TARBALL}"
+          git clone --depth 1 "https://x-access-token:${TAP_TOKEN}@github.com/yhiraki/homebrew-tap.git" tap
+          F=tap/Formula/dualtap.rb
+          sed -E -e "s|^(  url ).*|\1\"${URL}\"|" \
+                 -e "s|^(  sha256 ).*|\1\"${SHA}\"|" "$F" > "$F.tmp"
+          mv "$F.tmp" "$F"
+          cd tap
+          if git diff --quiet; then
+            echo "formula already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "dualtap ${GITHUB_REF_NAME#v}"
+          git push
