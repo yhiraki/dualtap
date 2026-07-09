@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-07-09
+### Fixed
+- `record -o PATH`: when PATH has no extension, the container extension
+  (`.m4a`/`.wav`) is now appended, matching the default output name.
+  Previously the file was written without an extension.
+
 ## [0.1.3] - 2026-07-04
 ### Added
 - Scheduled start for `record`: `--delay DUR` (relative) and `--start-at TIME`
@@ -29,7 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Core Audio process-tap API, no BlackHole. `record`, `monitor`, `devices`, and
   `menubar` subcommands.
 
-[Unreleased]: https://github.com/yhiraki/dualtap/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/yhiraki/dualtap/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/yhiraki/dualtap/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/yhiraki/dualtap/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/yhiraki/dualtap/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/yhiraki/dualtap/compare/v0.1.0...v0.1.1
