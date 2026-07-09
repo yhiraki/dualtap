@@ -1,5 +1,6 @@
 // Record.swift — run mic and system capture together, stop on signal, then combine.
 import Foundation
+import DualtapCore
 
 struct RecordOptions {
     var title = "recording"
@@ -113,7 +114,8 @@ func cmdRecord(_ o: RecordOptions) {
     waitSettle(dir: dir, hasMic: hasMic, hasSys: hasSys)
 
     let ext = o.container.rawValue
-    let output = o.output ?? (FileManager.default.currentDirectoryPath + "/dualtap-\(ts).\(ext)")
+    let output = resolveOutputPath(userOutput: o.output, timestamp: ts, ext: ext,
+                                   cwd: FileManager.default.currentDirectoryPath)
     let rate = o.rate ?? 48000
     let opts = CombineOptions(output: output, container: o.container, tracks: o.tracks,
                               rate: rate, hasMic: hasMic, hasSys: hasSys)
